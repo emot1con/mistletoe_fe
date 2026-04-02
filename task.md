@@ -1,0 +1,32 @@
+# Mistletoe Frontend Development
+
+- [x] Planning
+  - [x] Analyze backend API contracts, models, and auth flow
+  - [x] Design frontend project structure
+  - [ ] User review & approval of plan
+- [ ] Backend Prep
+  - [ ] Add CORS middleware to Go backend (`gin-contrib/cors`)
+- [ ] Project Setup
+  - [ ] Initialize Vite + React + TypeScript project in `mistletoe_fe/`
+  - [ ] Configure environment variables (API base URL)
+  - [ ] Setup CSS design system (globals.css)
+- [ ] API & Auth Layer
+  - [ ] Create typed API client with JWT interceptor + auto-refresh
+  - [ ] Create AuthProvider context + ProtectedRoute
+  - [ ] Implement auth callback page (parse tokens from URL)
+- [ ] Core Pages
+  - [ ] Login page (premium design)
+  - [ ] Dashboard page (overview + quick actions)
+  - [ ] Repositories page (list + connect modal)
+  - [ ] New Analysis page (form + loading state)
+  - [ ] Analysis Result page (visualizations)
+  - [ ] Analysis History page (paginated table)
+- [ ] UI Components
+  - [ ] AppLayout (Sidebar + Header)
+  - [ ] ImpactScoreGauge, RiskBadge, EffortRange
+  - [ ] GithubRepoSelector modal
+  - [ ] Toast notification system
+- [ ] Polish & Verification
+  - [ ] Micro-animations and transitions
+  - [ ] Mobile responsive
+  - [ ] End-to-end browser testing
