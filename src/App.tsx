@@ -9,12 +9,16 @@ import { DashboardPage } from './pages/DashboardPage';
 import { RepositoriesPage } from './pages/RepositoriesPage';
 import { AnalysisNewPage } from './pages/AnalysisNewPage';
 import { AnalysisHistoryPage } from './pages/AnalysisHistoryPage';
+import { AnalysisResultPage } from './pages/AnalysisResultPage';
+
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<CallbackPage />} />
@@ -26,12 +30,13 @@ function App() {
               <Route path="/repositories" element={<RepositoriesPage />} />
               <Route path="/analysis/new" element={<AnalysisNewPage />} />
               <Route path="/history" element={<AnalysisHistoryPage />} />
-              {/* <Route path="/analysis/:id" element={<AnalysisResultPage />} /> */}
+              <Route path="/analysis/:id" element={<AnalysisResultPage />} />
             </Route>
           </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

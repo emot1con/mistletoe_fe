@@ -44,5 +44,8 @@ export const mistletoeApi = {
         api.get<AnalysisRequest[]>(`/repositories/${repoId}/analyses?page=${page}&limit=${limit}`),
 
     getAnalysisCount: () => 
-        api.get<number>('/analysis/count')
+        api.get<number>('/analysis/count'),
+
+    getAnalysisRepoCount: (repoId: string) =>
+        api.get<number>(`/repositories/${repoId}/analyses/count`)
 };

@@ -9,22 +9,51 @@ export const DashboardPage: React.FC = () => {
     const [repos, setRepos] = useState<UserRepository[]>([]);
     const [analysisCount, setAnalysisCount] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const controller = new AbortController();
         setIsLoading(true);
+        setError(null);
+
         Promise.all([
             mistletoeApi.getSelectedRepos(),
             mistletoeApi.getAnalysisCount()
         ])
             .then(([reposData, countData]: [any, any]) => {
+                if (controller.signal.aborted) return;
                 setRepos(reposData || []);
                 setAnalysisCount(countData);
             })
-            .catch((err: any) => console.error("Failed to load dashboard data", err))
-            .finally(() => setIsLoading(false));
+            .catch((err: any) => {
+                if (controller.signal.aborted) return;
+                console.error("Failed to load dashboard data", err);
+                setError("Failed to load dashboard data. Please try again later.");
+            })
+            .finally(() => {
+                if (controller.signal.aborted) return;
+                setIsLoading(false);
+            });
+
+        return () => controller.abort();
     }, []);
 
     if (isLoading) return <PageLoader />;
+
+    if (error) {
+        return (
+            <div className="glass-card p-12 text-center border-danger/20">
+                <h3 className="text-danger font-bold text-lg mb-2">Error</h3>
+                <p className="text-text-muted mb-6">{error}</p>
+                <button 
+                    onClick={() => window.location.reload()} 
+                    className="btn btn-ghost"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { mistletoeApi } from '../api/endpoints';
-import type { UserRepository, AnalysisResult } from '../types';
+import type { UserRepository } from '../types';
 import { Loader } from '../components/ui/Loader';
-import { ImpactScoreGauge, RiskBadge, EffortRange, ComponentsList } from '../components/analysis/Visualization';
 import { Send, Sparkles } from 'lucide-react';
 
 export const AnalysisNewPage: React.FC = () => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const initialRepoId = searchParams.get('repo') || '';
 
     const [repos, setRepos] = useState<UserRepository[]>([]);
@@ -15,7 +15,6 @@ export const AnalysisNewPage: React.FC = () => {
     const [featureRequest, setFeatureRequest] = useState('');
     const [isLoadingRepos, setIsLoadingRepos] = useState(true);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [result, setResult] = useState<AnalysisResult | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -36,14 +35,13 @@ export const AnalysisNewPage: React.FC = () => {
 
         setIsAnalyzing(true);
         setError(null);
-        setResult(null);
 
         try {
             const data = await mistletoeApi.createAnalysis(selectedRepoId, featureRequest);
-            setResult(data);
+            // Redirect to detail page
+            navigate(`/analysis/${data.analysis_request_id}`);
         } catch (err: any) {
             setError(err.message || "An error occurred during analysis.");
-        } finally {
             setIsAnalyzing(false);
         }
     };
@@ -107,7 +105,7 @@ export const AnalysisNewPage: React.FC = () => {
                 {/* Results Section */}
                 <div className="lg:col-span-7">
                     {/* Placeholder State */}
-                    {!isAnalyzing && !result && !error && (
+                    {!isAnalyzing && !error && (
                         <div className="h-full min-h-[400px] glass-card flex flex-col items-center justify-center p-8 text-center text-text-muted border-dashed border-2">
                             <Sparkles size={48} className="mb-4 opacity-50" />
                             <h3 className="text-xl font-bold mb-2">Awaiting Request</h3>
@@ -132,43 +130,6 @@ export const AnalysisNewPage: React.FC = () => {
                         <div className="glass-card p-6 bg-danger/5 border-danger/20 text-center">
                             <h3 className="text-danger font-bold text-lg mb-2">Analysis Failed</h3>
                             <p className="text-text-muted">{error}</p>
-                        </div>
-                    )}
-
-                    {/* Result State */}
-                    {result && !isAnalyzing && (
-                        <div className="glass-card p-8 animate-fade h-full">
-                            <div className="flex items-center justify-between mb-8 pb-6 border-b border-glass-border">
-                                <div>
-                                    <h2 className="text-2xl font-heading font-bold mb-2">Analysis Result</h2>
-                                    <p className="text-sm text-text-muted">Detected {result.feature_types.length} engineering patterns.</p>
-                                </div>
-                                <RiskBadge level={result.risk_level} />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                <div className="flex justify-center border-r border-glass-border/50 pr-4">
-                                    <ImpactScoreGauge score={result.impact_score} />
-                                </div>
-                                <div className="flex flex-col justify-center space-y-4">
-                                    <EffortRange min={result.estimated_effort_hours[0]} max={result.estimated_effort_hours[1]} />
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <h4 className="text-sm font-bold text-text-muted uppercase mb-2">Identified Patterns</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {result.feature_types.map(f => (
-                                            <span key={f} className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-semibold">
-                                                {f}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <ComponentsList components={result.affected_components} />
-                            </div>
                         </div>
                     )}
                 </div>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, Clock, Server } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, ChevronDown, Clock, Server, Sparkles } from 'lucide-react';
 
 export const RiskBadge: React.FC<{ level: string }> = ({ level }) => {
     const colors = {
@@ -14,8 +14,152 @@ export const RiskBadge: React.FC<{ level: string }> = ({ level }) => {
     return (
         <span className={`px-2.5 py-1 rounded border text-xs font-bold uppercase tracking-wider flex items-center w-fit gap-1.5 ${colorClass}`}>
             <AlertTriangle size={14} />
-            {level} Risk
+            {level === 'low' ? 'Low' : level === 'medium' ? 'Medium' : level === 'high' ? 'High' : 'Critical'} Risk
         </span>
+    );
+};
+
+export const AlternativeApproaches: React.FC<{ approaches: any[] }> = ({ approaches }) => {
+    const [selectedIdx, setSelectedIdx] = useState(() => {
+        const mvpIdx = approaches?.findIndex(app => (app.label || '').toLowerCase().includes('mvp'));
+        return mvpIdx >= 0 ? mvpIdx : 0;
+    });
+    const [isOpen, setIsOpen] = useState(false);
+
+    if (!approaches || approaches.length === 0) return null;
+
+    const selected = approaches[selectedIdx];
+    const maxHoursAll = Math.max(...approaches.map(a => a.estimated_effort_max_hours));
+    const minHours = selected.estimated_effort_min_hours;
+    const maxHours = selected.estimated_effort_max_hours;
+    
+    const radius = 40;
+    const circumference = 2 * Math.PI * radius;
+    
+    const minDash = (minHours / maxHoursAll) * circumference;
+    const maxDash = ((maxHours - minHours) / maxHoursAll) * circumference;
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-xl font-heading font-bold flex items-center gap-2">
+                    <Sparkles size={20} className="text-accent" /> Strategy Alternatives
+                </h3>
+            </div>
+            
+            <div className="glass-card p-6 border-t-4 border-t-accent/50 relative">
+                {/* Dropdown Header */}
+                <div className="flex justify-between items-center mb-6 border-b border-glass-border pb-4 relative">
+                    <div className="relative">
+                        <button 
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="flex items-center gap-3 px-4 py-2 bg-bg-dark border border-glass-border rounded-lg hover:border-accent transition-all text-left"
+                        >
+                            <div>
+                                <span className="text-xs text-text-muted block uppercase font-bold tracking-wider">Selected Tier</span>
+                                <span className="text-lg font-heading font-bold text-accent">{selected.label}</span>
+                            </div>
+                            <ChevronDown size={20} className={`text-text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        
+                        {/* Dropdown Menu */}
+                        {isOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-64 bg-glass border border-glass-border rounded-lg shadow-xl z-10 overflow-hidden backdrop-blur-md">
+                                {approaches.map((app, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            setSelectedIdx(idx);
+                                            setIsOpen(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-3 hover:bg-glass-border transition-colors border-l-2 ${idx === selectedIdx ? 'border-l-accent bg-glass-border/50' : 'border-l-transparent'}`}
+                                    >
+                                        <div className="font-bold text-sm text-text-main">{app.label}</div>
+                                        <div className="text-xs text-text-muted">{app.estimated_effort_min_hours} - {app.estimated_effort_max_hours} hrs</div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    
+                    <RiskBadge level={selected.impact_level} />
+                </div>
+                
+                {/* Content Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Left content: info */}
+                    <div className="md:col-span-2 flex flex-col justify-between">
+                        <p className="text-sm text-text-muted leading-relaxed mb-6">
+                            {selected.description}
+                        </p>
+                        
+                        <div className="mt-auto">
+                            <p className="text-xs uppercase font-bold text-text-muted mb-2">Included Patterns / Features:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {selected.included_patterns.map((p: string) => (
+                                    <span key={p} className="px-2 py-1 bg-bg-dark border border-glass-border rounded-md text-xs text-text-main shadow-sm font-mono">
+                                        {p}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Right content: Pie Chart */}
+                    <div className="flex flex-col items-center justify-center bg-bg-dark/50 p-4 rounded-xl border border-glass-border">
+                        <p className="text-xs font-bold uppercase text-text-muted mb-4 tracking-wider">Effort Breakdown</p>
+                        <div className="relative w-32 h-32 flex items-center justify-center">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                {/* Base unfilled ring */}
+                                <circle cx="50" cy="50" r={radius} fill="none" stroke="currentColor" className="text-glass-border" strokeWidth="12" />
+                                
+                                {/* Min hours ring */}
+                                <circle 
+                                    cx="50" cy="50" r={radius} fill="none" 
+                                    stroke="var(--primary)" 
+                                    strokeWidth="12" 
+                                    strokeDasharray={`${minDash} ${circumference}`}
+                                    strokeDashoffset="0"
+                                    className="transition-all duration-700 ease-in-out"
+                                />
+                                
+                                {/* Buffer hours ring (max - min) */}
+                                <circle 
+                                    cx="50" cy="50" r={radius} fill="none" 
+                                    stroke="var(--accent)" 
+                                    strokeWidth="12" 
+                                    strokeDasharray={`${maxDash} ${circumference}`}
+                                    strokeDashoffset={`-${minDash}`}
+                                    className="transition-all duration-700 ease-in-out opacity-80"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                <span className="font-heading font-bold text-lg text-text-main">{minHours}-{maxHours}</span>
+                                <span className="text-[10px] text-text-muted uppercase">Hours</span>
+                            </div>
+                        </div>
+                        
+                        {/* Legend */}
+                        <div className="flex flex-col gap-2 mt-4 w-full px-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block"></span>
+                                    <span className="text-text-muted">Minimum Effort</span>
+                                </div>
+                                <span className="font-mono">{minHours}h</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-accent inline-block"></span>
+                                    <span className="text-text-muted">Max Buffer</span>
+                                </div>
+                                <span className="font-mono">+{maxHours - minHours}h</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

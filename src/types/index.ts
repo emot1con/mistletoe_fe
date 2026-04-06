@@ -41,13 +41,25 @@ export interface AnalysisRequest {
   created_at: string;
 }
 
+export interface AlternativeApproach {
+  label: string;
+  description: string;
+  estimated_effort_min_hours: number;
+  estimated_effort_max_hours: number;
+  impact_level: 'low' | 'medium' | 'high' | 'critical';
+  included_patterns: string[];
+}
+
 export interface AnalysisResult {
   id: string;
   analysis_request_id: string;
+  feature_request_text: string;
   feature_types: string[];
   impact_score: number;
   risk_level: 'low' | 'medium' | 'high' | 'critical';
-  estimated_effort_hours: [number, number];
+  estimated_effort_min_hours: number;
+  estimated_effort_max_hours: number;
   affected_components: string[];
+  alternative_approaches: AlternativeApproach[];
   created_at: string;
 }

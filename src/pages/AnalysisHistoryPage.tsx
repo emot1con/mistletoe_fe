@@ -3,39 +3,100 @@ import { mistletoeApi } from '../api/endpoints';
 import type { UserRepository, AnalysisRequest } from '../types';
 import { PageLoader } from '../components/ui/Loader';
 import { History, GitBranch, Search, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const AnalysisHistoryPage: React.FC = () => {
     const [repos, setRepos] = useState<UserRepository[]>([]);
     const [selectedRepo, setSelectedRepo] = useState<string>('');
     const [history, setHistory] = useState<AnalysisRequest[]>([]);
+    const [counts, setCounts] = useState<Record<string, number>>({});
     const [isLoadingRepos, setIsLoadingRepos] = useState(true);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const controller = new AbortController();
         setIsLoadingRepos(true);
+        setError(null);
+
         mistletoeApi.getSelectedRepos()
             .then(data => {
-                setRepos(data || []);
-                if (data && data.length > 0) {
-                    setSelectedRepo(data[0].id);
+                if (controller.signal.aborted) return;
+                const reposData = data || [];
+                setRepos(reposData);
+                if (reposData.length > 0 && !selectedRepo) {
+                    setSelectedRepo(reposData[0].id);
                 }
+                
+                // Fetch analysis counts for each repo
+                const countsObj: Record<string, number> = {};
+                return Promise.all(
+                    reposData.map(repo => 
+                        mistletoeApi.getAnalysisRepoCount(repo.id)
+                            .then(count => {
+                                if (!controller.signal.aborted) {
+                                    countsObj[repo.id] = count;
+                                }
+                            })
+                            .catch(err => console.error(`Failed to load count for repo ${repo.id}`, err))
+                    )
+                ).then(() => {
+                    if (!controller.signal.aborted) {
+                        setCounts(countsObj);
+                    }
+                });
             })
-            .catch(err => console.error("Failed to load repos", err))
-            .finally(() => setIsLoadingRepos(false));
+            .catch(err => {
+                if (controller.signal.aborted) return;
+                console.error("Failed to load repos", err);
+                setError("Failed to load repositories.");
+            })
+            .finally(() => {
+                if (controller.signal.aborted) return;
+                setIsLoadingRepos(false);
+            });
+
+        return () => controller.abort();
     }, []);
 
     useEffect(() => {
         if (!selectedRepo) return;
+        const controller = new AbortController();
         setIsLoadingHistory(true);
+        
         mistletoeApi.getAnalysisHistory(selectedRepo)
             .then(data => {
+                if (controller.signal.aborted) return;
                 setHistory(data || []);
             })
-            .catch(err => console.error("Failed to load history", err))
-            .finally(() => setIsLoadingHistory(false));
+            .catch(err => {
+                if (controller.signal.aborted) return;
+                console.error("Failed to load history", err);
+            })
+            .finally(() => {
+                if (controller.signal.aborted) return;
+                setIsLoadingHistory(false);
+            });
+            
+        return () => controller.abort();
     }, [selectedRepo]);
 
     if (isLoadingRepos) return <PageLoader />;
+
+    if (error) {
+        return (
+            <div className="glass-card p-12 text-center border-danger/20">
+                <h3 className="text-danger font-bold text-lg mb-2">Error</h3>
+                <p className="text-text-muted mb-6">{error}</p>
+                <button 
+                    onClick={() => window.location.reload()} 
+                    className="btn btn-ghost"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -70,7 +131,14 @@ export const AnalysisHistoryPage: React.FC = () => {
                                         : 'glass-card hover:bg-glass/80 text-text-muted hover:text-white'
                                     }`}
                                 >
-                                    <span className="truncate">{repo.repo_name || repo.full_name.split('/')[1]}</span>
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <span className="truncate">{repo.repo_name || repo.full_name.split('/')[1]}</span>
+                                        {counts[repo.id] !== undefined && (
+                                            <span className="text-[10px] bg-black/40 text-text-muted px-2 py-0.5 rounded-full font-medium">
+                                                {counts[repo.id]}
+                                            </span>
+                                        )}
+                                    </div>
                                     {selectedRepo === repo.id && <ChevronRight size={16} className="text-primary flex-shrink-0" />}
                                 </button>
                             ))}
@@ -98,7 +166,7 @@ export const AnalysisHistoryPage: React.FC = () => {
                         ) : (
                             <div className="space-y-4">
                                 {history.map(item => (
-                                    <div key={item.id} className="p-4 rounded-xl border border-glass-border bg-glass/20 hover:bg-glass/40 transition-colors">
+                                    <Link key={item.id} to={item.status === 'completed' ? `/analysis/${item.id}` : '#'} className={`block p-4 rounded-xl border border-glass-border transition-colors ${item.status === 'completed' ? 'bg-glass/20 hover:bg-glass/40' : 'bg-glass/10 cursor-not-allowed opacity-70'}`}>
                                         <div className="flex items-center justify-between mb-2">
                                             <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-glass ${
                                                 item.status === 'completed' ? 'text-success' : 
@@ -114,7 +182,7 @@ export const AnalysisHistoryPage: React.FC = () => {
                                         <p className="text-sm line-clamp-3 text-white/90">
                                             {item.feature_request_text}
                                         </p>
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         )}
