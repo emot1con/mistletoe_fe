@@ -55,6 +55,7 @@ export interface AlternativeApproach {
 export interface AnalysisResult {
   id: string;
   analysis_request_id: string;
+  repository_id: string;
   feature_request_text: string;
   feature_types: string[];
   impact_score: number;
