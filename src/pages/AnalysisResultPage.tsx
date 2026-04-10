@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { mistletoeApi } from '../api/endpoints';
 import type { AnalysisResult } from '../types';
 import { PageLoader } from '../components/ui/Loader';
-import { ImpactScoreGauge, RiskBadge, EffortRange, ComponentsList, AlternativeApproaches } from '../components/analysis/Visualization';
+import { ImpactScoreGauge, RiskBadge, EffortRange, ComponentsList, AlternativeApproaches, DecisionFactors } from '../components/analysis/Visualization';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export const AnalysisResultPage: React.FC = () => {
@@ -81,6 +81,11 @@ export const AnalysisResultPage: React.FC = () => {
                         <p className="text-sm text-text-muted">Detected {result.feature_types.length} engineering patterns.</p>
                     </div>
                     <RiskBadge level={result.risk_level} />
+                </div>
+                
+                {/* Put decision factors right here below the summary findings header */}
+                <div className="mb-10">
+                    <DecisionFactors result={result} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">

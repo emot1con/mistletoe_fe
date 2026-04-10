@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, GitBranch, PlaySquare, LogOut, Code2, Menu, X, History } from 'lucide-react';
 import { useAuth } from '../../auth/useAuth';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 export const AppLayout: React.FC = () => {
     const { logout } = useAuth();
@@ -86,7 +87,9 @@ export const AppLayout: React.FC = () => {
                 {/* Content Area */}
                 <main className="flex-1 overflow-y-auto p-4 lg:p-8">
                     <div className="max-w-6xl mx-auto w-full animate-fade">
-                        <Outlet />
+                        <ErrorBoundary>
+                            <Outlet />
+                        </ErrorBoundary>
                     </div>
                 </main>
             </div>

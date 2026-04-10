@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, ChevronDown, Clock, Server, Sparkles } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Clock, Server, Sparkles, Shield, Zap, Link as LinkIcon, Briefcase, ChevronRight } from 'lucide-react';
 
 export const RiskBadge: React.FC<{ level: string }> = ({ level }) => {
     const colors = {
@@ -76,6 +76,7 @@ export const AlternativeApproaches: React.FC<{ approaches: any[] }> = ({ approac
                                     >
                                         <div className="font-bold text-sm text-text-main">{app.label}</div>
                                         <div className="text-xs text-text-muted">{app.estimated_effort_min_hours} - {app.estimated_effort_max_hours} hrs</div>
+                                        <div className="text-xs font-mono text-accent mt-0.5">${app.cost_estimate_min_usd} - ${app.cost_estimate_max_usd}</div>
                                     </button>
                                 ))}
                             </div>
@@ -89,9 +90,24 @@ export const AlternativeApproaches: React.FC<{ approaches: any[] }> = ({ approac
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Left content: info */}
                     <div className="md:col-span-2 flex flex-col justify-between">
-                        <p className="text-sm text-text-muted leading-relaxed mb-6">
-                            {selected.description}
-                        </p>
+                        <div className="mb-6 space-y-2">
+                            <p className="text-lg font-semibold text-text-main">
+                                {selected.description}
+                            </p>
+                            <p className="text-sm text-text-muted leading-relaxed">
+                                {(() => {
+                                    const lower = (selected.label || '').toLowerCase();
+                                    if (lower.includes('mvp')) {
+                                        return "MVP (Minimum Viable Product) focuses ONLY on the core functionalities needed to validate the feature. It delivers the highest priority capabilities with minimal effort, suitable for testing hypotheses quickly.";
+                                    } else if (lower.includes('balanced')) {
+                                        return "The Balanced approach includes the core MVP features plus important secondary functionalities. It provides a solid user experience with a reasonable development timeline, making it the most recommended option for standard releases.";
+                                    } else if (lower.includes('comprehensive')) {
+                                        return "The Comprehensive tier includes every nice-to-have, advanced, and edge-case capability. This is the full-featured vision that prioritizes maximum utility over launch speed.";
+                                    }
+                                    return "This strategy presents a tailored combination of features based on the selected priority.";
+                                })()}
+                            </p>
+                        </div>
                         
                         <div className="mt-auto">
                             <p className="text-xs uppercase font-bold text-text-muted mb-2">Included Patterns / Features:</p>
@@ -154,6 +170,10 @@ export const AlternativeApproaches: React.FC<{ approaches: any[] }> = ({ approac
                                     <span className="text-text-muted">Max Buffer</span>
                                 </div>
                                 <span className="font-mono">+{maxHours - minHours}h</span>
+                            </div>
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-glass-border">
+                                <span className="text-xs font-bold text-text-muted uppercase">Estimated Cost</span>
+                                <span className="text-xs font-mono font-bold text-accent">${selected.cost_estimate_min_usd} - ${selected.cost_estimate_max_usd}</span>
                             </div>
                         </div>
                     </div>
@@ -228,3 +248,92 @@ export const ComponentsList: React.FC<{ components: string[] }> = ({ components 
         </div>
     </div>
 );
+
+export const DecisionFactors: React.FC<{ result: any }> = ({ result }) => {
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    
+    // Safely verify if arrays exist and have items
+    const hasSecurityFlags = Array.isArray(result.security_flags) && result.security_flags.length > 0;
+    const hasExternalDeps = Array.isArray(result.external_dependencies) && result.external_dependencies.length > 0;
+
+    return (
+        <div className="mt-8 space-y-4">
+            <h4 className="text-sm font-bold text-text-muted uppercase">Decision Factors</h4>
+            
+            <div className="flex flex-wrap gap-3">
+                {/* Security Badge */}
+                {result.security_impact !== 'none' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-danger/10 border border-danger/30 rounded-lg text-danger text-sm font-semibold">
+                        <Shield size={16} /> Security: {result.security_impact}
+                    </div>
+                )}
+                
+                {/* Performance Badge */}
+                {result.performance_impact !== 'none' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-sm font-semibold">
+                        <Zap size={16} /> Perf: {result.performance_impact}
+                    </div>
+                )}
+                
+                {/* External Deps Badge */}
+                {result.external_dependency_count > 0 && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-500 text-sm font-semibold">
+                        <LinkIcon size={16} /> Ext Deps: {result.external_dependency_count}
+                    </div>
+                )}
+
+                {/* Technical Debt Badge */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-success/10 border border-success/30 rounded-lg text-success text-sm font-semibold">
+                    <Briefcase size={16} /> Debt: {result.technical_debt_score}
+                </div>
+            </div>
+
+            {/* Clickable details panel */}
+            <div className="pt-2">
+                <button 
+                    onClick={() => setDetailsOpen(!detailsOpen)}
+                    className="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors"
+                >
+                    <ChevronRight size={16} className={`transition-transform ${detailsOpen ? 'rotate-90' : ''}`} />
+                    View Factor Details
+                </button>
+                
+                {detailsOpen && (
+                    <div className="mt-4 p-5 bg-bg-dark border border-glass-border rounded-xl space-y-6 animate-fade">
+                        {hasSecurityFlags && (
+                            <div>
+                                <h5 className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                    <Shield size={14} className="text-danger" /> Security Flags
+                                </h5>
+                                <ul className="list-disc list-inside text-sm text-text-main space-y-1">
+                                    {result.security_flags.map((flag: string, i: number) => (
+                                        <li key={i}>{flag}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        
+                        {hasExternalDeps && (
+                            <div>
+                                <h5 className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                    <LinkIcon size={14} className="text-blue-500" /> External Dependencies
+                                </h5>
+                                <div className="flex flex-wrap gap-2">
+                                    {result.external_dependencies.map((dep: string) => (
+                                        <span key={dep} className="px-2 py-1 bg-glass border border-glass-border/50 rounded-md text-xs font-mono text-text-main">
+                                            {dep}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {!hasSecurityFlags && !hasExternalDeps && (
+                            <p className="text-sm text-text-muted italic">No specific details to show for security or external dependencies.</p>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};

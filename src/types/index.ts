@@ -48,6 +48,8 @@ export interface AlternativeApproach {
   estimated_effort_max_hours: number;
   impact_level: 'low' | 'medium' | 'high' | 'critical';
   included_patterns: string[];
+  cost_estimate_min_usd: number;
+  cost_estimate_max_usd: number;
 }
 
 export interface AnalysisResult {
@@ -61,5 +63,13 @@ export interface AnalysisResult {
   estimated_effort_max_hours: number;
   affected_components: string[];
   alternative_approaches: AlternativeApproach[];
+  security_impact: 'none' | 'low' | 'medium' | 'high' | 'critical';
+  security_flags: string[];
+  performance_impact: 'none' | 'low' | 'medium' | 'high';
+  external_dependency_count: number;
+  external_dependencies: string[];
+  technical_debt_score: 'low' | 'medium' | 'high';
+  cost_estimate_min_usd: number;
+  cost_estimate_max_usd: number;
   created_at: string;
 }

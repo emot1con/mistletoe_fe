@@ -111,6 +111,12 @@ export const apiFetch = async <T>(endpoint: string, options: FetchOptions = {}):
         }
     }
 
+    // Guard against non-JSON responses (e.g. HTML error pages when backend is down)
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+        throw new Error(`Server returned an unexpected response (status ${response.status}). Backend may be unavailable.`);
+    }
+
     const data = await response.json();
     if (!response.ok) {
         throw new Error(data.error || `HTTP error ${response.status}`);
