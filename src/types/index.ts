@@ -66,6 +66,7 @@ export interface AnalysisResult {
   security_impact: 'none' | 'low' | 'medium' | 'high' | 'critical';
   security_flags: string[];
   performance_impact: 'none' | 'low' | 'medium' | 'high';
+  performance_description?: string;
   external_dependency_count: number;
   external_dependencies: string[];
   technical_debt_score: 'low' | 'medium' | 'high';

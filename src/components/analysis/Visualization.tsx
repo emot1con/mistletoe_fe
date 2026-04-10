@@ -1,5 +1,19 @@
-import React, { useState } from 'react';
-import { AlertTriangle, ChevronDown, Clock, Server, Sparkles, Shield, Zap, Link as LinkIcon, Briefcase, ChevronRight } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { AlertTriangle, ChevronDown, Clock, Server, Sparkles, Shield, Zap, Link as LinkIcon, Briefcase } from 'lucide-react';
+
+const securitySeverityLabel: Record<string, string> = {
+    low: 'Minor concern — does not significantly affect system security.',
+    medium: 'Moderate concern — should be reviewed before production deploy.',
+    high: 'High concern — requires thorough security review and testing.',
+    critical: 'Critical concern — MUST pass security audit before any deploy.',
+};
+
+const performanceDescription: Record<string, string> = {
+    low: 'Low performance impact — does not significantly affect system speed or resources.',
+    medium: 'Moderate performance impact — may slow down some operations if not properly optimized.',
+    high: 'High performance impact — likely to cause noticeable slowdowns, requires optimization or scaling.',
+    critical: 'Critical performance impact — will severely affect system performance, requires load testing before deploy.',
+};
 
 export const RiskBadge: React.FC<{ level: string }> = ({ level }) => {
     const colors = {
@@ -250,7 +264,25 @@ export const ComponentsList: React.FC<{ components: string[] }> = ({ components 
 );
 
 export const DecisionFactors: React.FC<{ result: any }> = ({ result }) => {
-    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [hoveredFactor, setHoveredFactor] = useState<string | null>(null);
+    const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleMouseEnter = (factor: string) => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+        }
+        hoverTimeoutRef.current = setTimeout(() => {
+            setHoveredFactor(factor);
+        }, 300);
+    };
+
+    const handleMouseLeave = () => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+        setHoveredFactor(null);
+    };
     
     // Safely verify if arrays exist and have items
     const hasSecurityFlags = Array.isArray(result.security_flags) && result.security_flags.length > 0;
@@ -263,58 +295,63 @@ export const DecisionFactors: React.FC<{ result: any }> = ({ result }) => {
             <div className="flex flex-wrap gap-3">
                 {/* Security Badge */}
                 {result.security_impact !== 'none' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-danger/10 border border-danger/30 rounded-lg text-danger text-sm font-semibold">
+                    <div 
+                        className="relative flex items-center gap-1.5 px-3 py-1.5 bg-danger/10 border border-danger/30 rounded-lg text-danger text-sm font-semibold cursor-pointer transition-all hover:bg-danger/20"
+                        onMouseEnter={() => handleMouseEnter('security')}
+                        onMouseLeave={handleMouseLeave}
+                    >
                         <Shield size={16} /> Security: {result.security_impact}
+                        {hoveredFactor === 'security' && (
+                            <div className="absolute top-full left-0 mt-2 p-4 bg-bg-dark border border-glass-border rounded-xl shadow-xl z-20 min-w-[280px] animate-fade">
+                                <h5 className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                    <Shield size={14} className="text-danger" /> Security Detail
+                                </h5>
+                                <p className="text-sm text-text-main mb-3">
+                                    {securitySeverityLabel[result.security_impact] || 'No security concerns detected.'}
+                                </p>
+                                {hasSecurityFlags && (
+                                    <ul className="list-disc list-inside text-sm text-text-main space-y-1 border-t border-glass-border pt-2">
+                                        {result.security_flags.map((flag: string, i: number) => (
+                                            <li key={i}>{flag}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
                 
                 {/* Performance Badge */}
                 {result.performance_impact !== 'none' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-sm font-semibold">
+                    <div 
+                        className="relative flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-sm font-semibold cursor-pointer transition-all hover:bg-yellow-500/20"
+                        onMouseEnter={() => handleMouseEnter('performance')}
+                        onMouseLeave={handleMouseLeave}
+                    >
                         <Zap size={16} /> Perf: {result.performance_impact}
+                        {hoveredFactor === 'performance' && (
+                            <div className="absolute top-full left-0 mt-2 p-4 bg-bg-dark border border-glass-border rounded-xl shadow-xl z-20 min-w-[280px] animate-fade">
+                                <h5 className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                    <Zap size={14} className="text-yellow-500" /> Performance Detail
+                                </h5>
+                                <p className="text-sm text-text-main">
+                                    {performanceDescription[result.performance_impact] || 'No significant performance impact.'}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 )}
                 
                 {/* External Deps Badge */}
                 {result.external_dependency_count > 0 && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-500 text-sm font-semibold">
+                    <div 
+                        className="relative flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-500 text-sm font-semibold cursor-pointer transition-all hover:bg-blue-500/20"
+                        onMouseEnter={() => handleMouseEnter('extdeps')}
+                        onMouseLeave={handleMouseLeave}
+                    >
                         <LinkIcon size={16} /> Ext Deps: {result.external_dependency_count}
-                    </div>
-                )}
-
-                {/* Technical Debt Badge */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-success/10 border border-success/30 rounded-lg text-success text-sm font-semibold">
-                    <Briefcase size={16} /> Debt: {result.technical_debt_score}
-                </div>
-            </div>
-
-            {/* Clickable details panel */}
-            <div className="pt-2">
-                <button 
-                    onClick={() => setDetailsOpen(!detailsOpen)}
-                    className="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors"
-                >
-                    <ChevronRight size={16} className={`transition-transform ${detailsOpen ? 'rotate-90' : ''}`} />
-                    View Factor Details
-                </button>
-                
-                {detailsOpen && (
-                    <div className="mt-4 p-5 bg-bg-dark border border-glass-border rounded-xl space-y-6 animate-fade">
-                        {hasSecurityFlags && (
-                            <div>
-                                <h5 className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
-                                    <Shield size={14} className="text-danger" /> Security Flags
-                                </h5>
-                                <ul className="list-disc list-inside text-sm text-text-main space-y-1">
-                                    {result.security_flags.map((flag: string, i: number) => (
-                                        <li key={i}>{flag}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        
-                        {hasExternalDeps && (
-                            <div>
+                        {hoveredFactor === 'extdeps' && hasExternalDeps && (
+                            <div className="absolute top-full left-0 mt-2 p-4 bg-bg-dark border border-glass-border rounded-xl shadow-xl z-20 min-w-[280px] animate-fade">
                                 <h5 className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
                                     <LinkIcon size={14} className="text-blue-500" /> External Dependencies
                                 </h5>
@@ -327,12 +364,13 @@ export const DecisionFactors: React.FC<{ result: any }> = ({ result }) => {
                                 </div>
                             </div>
                         )}
-                        
-                        {!hasSecurityFlags && !hasExternalDeps && (
-                            <p className="text-sm text-text-muted italic">No specific details to show for security or external dependencies.</p>
-                        )}
                     </div>
                 )}
+
+                {/* Technical Debt Badge */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-success/10 border border-success/30 rounded-lg text-success text-sm font-semibold">
+                    <Briefcase size={16} /> Debt: {result.technical_debt_score}
+                </div>
             </div>
         </div>
     );
