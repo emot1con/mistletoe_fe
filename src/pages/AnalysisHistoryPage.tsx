@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { mistletoeApi } from '../api/endpoints';
 import type { UserRepository, AnalysisRequest } from '../types';
 import { PageLoader } from '../components/ui/Loader';
-import { History, GitBranch, Search, ChevronRight } from 'lucide-react';
+import { History, GitBranch, Search, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const AnalysisHistoryPage: React.FC = () => {
@@ -13,6 +13,10 @@ export const AnalysisHistoryPage: React.FC = () => {
     const [isLoadingRepos, setIsLoadingRepos] = useState(true);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
+    const limit = 10;
 
     useEffect(() => {
         const controller = new AbortController();
@@ -64,10 +68,12 @@ export const AnalysisHistoryPage: React.FC = () => {
         const controller = new AbortController();
         setIsLoadingHistory(true);
         
-        mistletoeApi.getAnalysisHistory(selectedRepo)
-            .then(data => {
+        mistletoeApi.getAnalysisHistory(selectedRepo, page, limit)
+            .then(res => {
                 if (controller.signal.aborted) return;
-                setHistory(data || []);
+                setHistory(res?.data || []);
+                setTotal(res?.total ?? 0);
+                setTotalPages(res?.total_pages ?? 1);
             })
             .catch(err => {
                 if (controller.signal.aborted) return;
@@ -79,7 +85,12 @@ export const AnalysisHistoryPage: React.FC = () => {
             });
             
         return () => controller.abort();
-    }, [selectedRepo]);
+    }, [selectedRepo, page]);
+
+    const handleRepoSelect = (repoId: string) => {
+        setSelectedRepo(repoId);
+        setPage(1);
+    };
 
     if (isLoadingRepos) return <PageLoader />;
 
@@ -124,7 +135,7 @@ export const AnalysisHistoryPage: React.FC = () => {
                             {repos.map(repo => (
                                 <button
                                     key={repo.id}
-                                    onClick={() => setSelectedRepo(repo.id)}
+                                    onClick={() => handleRepoSelect(repo.id)}
                                     className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between ${
                                         selectedRepo === repo.id 
                                         ? 'bg-primary/20 border border-primary/30 text-white' 
@@ -148,43 +159,96 @@ export const AnalysisHistoryPage: React.FC = () => {
 
                 {/* Main area for history */}
                 <div className="lg:col-span-3">
-                    <div className="glass-card p-6 min-h-[400px]">
+                    <div className="glass-card p-6 min-h-[400px] flex flex-col">
                         {!selectedRepo ? (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-text-muted py-20">
+                            <div className="flex-1 flex flex-col items-center justify-center text-text-muted py-20">
                                 <Search size={48} className="opacity-20 mb-4" />
                                 <p>Select a repository to view its analysis history.</p>
                             </div>
                         ) : isLoadingHistory ? (
-                            <div className="w-full h-full flex items-center justify-center py-20">
+                            <div className="flex-1 flex items-center justify-center py-20">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                             </div>
                         ) : history.length === 0 ? (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-text-muted py-20">
+                            <div className="flex-1 flex flex-col items-center justify-center text-text-muted py-20">
                                 <History size={48} className="opacity-20 mb-4" />
                                 <p>No analysis history found for this repository.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {history.map(item => (
-                                    <Link key={item.id} to={item.status === 'completed' ? `/analysis/${item.id}` : '#'} className={`block p-4 rounded-xl border border-glass-border transition-colors ${item.status === 'completed' ? 'bg-glass/20 hover:bg-glass/40' : 'bg-glass/10 cursor-not-allowed opacity-70'}`}>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-glass ${
-                                                item.status === 'completed' ? 'text-success' : 
-                                                item.status === 'processing' ? 'text-accent' : 
-                                                item.status === 'failed' ? 'text-danger' : 'text-text-muted'
-                                            }`}>
-                                                {item.status}
-                                            </span>
-                                            <span className="text-xs text-text-muted">
-                                                {new Date(item.created_at).toLocaleString()}
-                                            </span>
+                            <>
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className="text-sm text-text-muted">{total} total analyses</span>
+                                    <span className="text-sm text-text-muted">Page {page} of {totalPages}</span>
+                                </div>
+                                <div className="space-y-4 flex-1">
+                                    {history.map(item => (
+                                        <Link key={item.id} to={item.status === 'completed' ? `/analysis/${item.id}` : '#'} className={`block p-4 rounded-xl border border-glass-border transition-colors ${item.status === 'completed' ? 'bg-glass/20 hover:bg-glass/40' : 'bg-glass/10 cursor-not-allowed opacity-70'}`}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-glass ${
+                                                    item.status === 'completed' ? 'text-success' : 
+                                                    item.status === 'processing' ? 'text-accent' : 
+                                                    item.status === 'failed' ? 'text-danger' : 'text-text-muted'
+                                                }`}>
+                                                    {item.status}
+                                                </span>
+                                                <span className="text-xs text-text-muted">
+                                                    {new Date(item.created_at).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm line-clamp-3 text-white/90">
+                                                {item.feature_request_text}
+                                            </p>
+                                        </Link>
+                                    ))}
+                                </div>
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-glass-border">
+                                        <button
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page <= 1}
+                                            className="p-2 rounded-lg glass-card hover:bg-glass/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                            aria-label="Previous page"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                                                .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                                                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push('...');
+                                                    acc.push(p);
+                                                    return acc;
+                                                }, [])
+                                                .map((p, idx) =>
+                                                    p === '...' ? (
+                                                        <span key={`ellipsis-${idx}`} className="px-2 text-text-muted">…</span>
+                                                    ) : (
+                                                        <button
+                                                            key={p}
+                                                            onClick={() => setPage(p as number)}
+                                                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                                                                page === p
+                                                                    ? 'bg-primary text-white'
+                                                                    : 'glass-card hover:bg-glass/80 text-text-muted hover:text-white'
+                                                            }`}
+                                                        >
+                                                            {p}
+                                                        </button>
+                                                    )
+                                                )
+                                            }
                                         </div>
-                                        <p className="text-sm line-clamp-3 text-white/90">
-                                            {item.feature_request_text}
-                                        </p>
-                                    </Link>
-                                ))}
-                            </div>
+                                        <button
+                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={page >= totalPages}
+                                            className="p-2 rounded-lg glass-card hover:bg-glass/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                            aria-label="Next page"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

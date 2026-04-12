@@ -3,7 +3,8 @@ import type {
     UserRepository, 
     GithubRepo, 
     AnalysisRequest, 
-    AnalysisResult 
+    AnalysisResult,
+    PaginatedResponse
 } from '../types';
 
 export const mistletoeApi = {
@@ -41,7 +42,7 @@ export const mistletoeApi = {
         api.get<AnalysisResult>(`/analysis/${id}`),
         
     getAnalysisHistory: (repoId: string, page = 1, limit = 10) => 
-        api.get<AnalysisRequest[]>(`/repositories/${repoId}/analyses?page=${page}&limit=${limit}`),
+        api.get<PaginatedResponse<AnalysisRequest>>(`/repositories/${repoId}/analyses?page=${page}&limit=${limit}`),
 
     getAnalysisCount: () => 
         api.get<number>('/analysis/count'),

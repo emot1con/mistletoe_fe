@@ -43,7 +43,7 @@ export const AlternativeApproaches: React.FC<{ approaches: any[] }> = ({ approac
     if (!approaches || approaches.length === 0) return null;
 
     const selected = approaches[selectedIdx];
-    const maxHoursAll = Math.max(...approaches.map(a => a.estimated_effort_max_hours));
+    const maxHoursAll = Math.max(1, ...approaches.map(a => a.estimated_effort_max_hours));
     const minHours = selected.estimated_effort_min_hours;
     const maxHours = selected.estimated_effort_max_hours;
     
@@ -126,7 +126,9 @@ export const AlternativeApproaches: React.FC<{ approaches: any[] }> = ({ approac
                         <div className="mt-auto">
                             <p className="text-xs uppercase font-bold text-text-muted mb-2">Included Patterns / Features:</p>
                             <div className="flex flex-wrap gap-2">
-                                {selected.included_patterns.map((p: string) => (
+                                {(selected.included_patterns || []).length === 0 ? (
+                                    <span className="text-xs text-text-muted italic">No patterns in this tier</span>
+                                ) : (selected.included_patterns || []).map((p: string) => (
                                     <span key={p} className="px-2 py-1 bg-bg-dark border border-glass-border rounded-md text-xs text-text-main shadow-sm font-mono">
                                         {p}
                                     </span>

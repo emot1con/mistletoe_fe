@@ -41,6 +41,14 @@ export interface AnalysisRequest {
   created_at: string;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
 export interface AlternativeApproach {
   label: string;
   description: string;

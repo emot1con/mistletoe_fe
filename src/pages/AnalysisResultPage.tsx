@@ -4,7 +4,7 @@ import { mistletoeApi } from '../api/endpoints';
 import type { AnalysisResult, AnalysisRequest } from '../types';
 import { PageLoader } from '../components/ui/Loader';
 import { ImpactScoreGauge, RiskBadge, EffortRange, ComponentsList, AlternativeApproaches, DecisionFactors } from '../components/analysis/Visualization';
-import { ArrowLeft, Sparkles, History } from 'lucide-react';
+import { ArrowLeft, Sparkles, History, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const AnalysisResultPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -13,6 +13,9 @@ export const AnalysisResultPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [historyPage, setHistoryPage] = useState(1);
+    const [historyTotalPages, setHistoryTotalPages] = useState(1);
+    const historyLimit = 10;
 
     useEffect(() => {
         if (!id) return;
@@ -42,10 +45,11 @@ export const AnalysisResultPage: React.FC = () => {
         const controller = new AbortController();
         setIsLoadingHistory(true);
         
-        mistletoeApi.getAnalysisHistory(result.repository_id)
-            .then(data => {
+        mistletoeApi.getAnalysisHistory(result.repository_id, historyPage, historyLimit)
+            .then(res => {
                 if (controller.signal.aborted) return;
-                setHistory(data || []);
+                setHistory(res?.data || []);
+                setHistoryTotalPages(res?.total_pages ?? 1);
             })
             .catch(err => {
                 if (controller.signal.aborted) return;
@@ -57,7 +61,7 @@ export const AnalysisResultPage: React.FC = () => {
             });
             
         return () => controller.abort();
-    }, [result?.repository_id]);
+    }, [result?.repository_id, historyPage]);
 
     if (isLoading) return <PageLoader />;
 
@@ -98,7 +102,8 @@ export const AnalysisResultPage: React.FC = () => {
                         <History size={20} className="text-text-muted" />
                         Repository History
                     </h3>
-                    <div className="glass-card p-4 custom-scrollbar" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+                    <div className="glass-card p-4 custom-scrollbar flex flex-col" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                        <div className="flex-1 overflow-y-auto">
                         {isLoadingHistory ? (
                             <div className="flex justify-center py-10">
                                 <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
@@ -136,6 +141,28 @@ export const AnalysisResultPage: React.FC = () => {
                                         </p>
                                     </Link>
                                 ))}
+                            </div>
+                        )}
+                        </div>
+                        {historyTotalPages > 1 && (
+                            <div className="flex items-center justify-between pt-3 mt-3 border-t border-glass-border">
+                                <button
+                                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                                    disabled={historyPage <= 1}
+                                    className="p-1.5 rounded-lg glass-card hover:bg-glass/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    aria-label="Previous page"
+                                >
+                                    <ChevronLeft size={14} />
+                                </button>
+                                <span className="text-xs text-text-muted">{historyPage} / {historyTotalPages}</span>
+                                <button
+                                    onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))}
+                                    disabled={historyPage >= historyTotalPages}
+                                    className="p-1.5 rounded-lg glass-card hover:bg-glass/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    aria-label="Next page"
+                                >
+                                    <ChevronRight size={14} />
+                                </button>
                             </div>
                         )}
                     </div>
