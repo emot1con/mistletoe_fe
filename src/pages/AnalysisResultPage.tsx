@@ -4,6 +4,7 @@ import { mistletoeApi } from '../api/endpoints';
 import type { AnalysisResult, AnalysisRequest, ExportJob } from '../types';
 import { PageLoader } from '../components/ui/Loader';
 import { ImpactScoreGauge, RiskBadge, EffortRange, ComponentsList, AlternativeApproaches, DecisionFactors } from '../components/analysis/Visualization';
+import { AnalysisComments } from '../components/analysis/AnalysisComments';
 import { ArrowLeft, Sparkles, History, ChevronLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
 
 const GithubIcon = ({ size = 24, className = "" }: { size?: number, className?: string }) => (
@@ -296,6 +297,10 @@ export const AnalysisResultPage: React.FC = () => {
 
                             <ComponentsList components={result.affected_components} />
                         </div>
+                    </div>
+
+                    <div className="mt-8">
+                        <AnalysisComments resultId={result.id} />
                     </div>
                 </div>
             </div>

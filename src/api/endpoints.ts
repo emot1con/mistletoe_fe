@@ -7,7 +7,10 @@ import type {
     PaginatedResponse,
     ExportJob,
     UserSettings,
-    DashboardAnalytics
+    DashboardAnalytics,
+    Organization,
+    OrganizationMember,
+    AnalysisComment
 } from '../types';
 
 export const mistletoeApi = {
@@ -73,5 +76,61 @@ export const mistletoeApi = {
         const y = year ?? now.getFullYear();
         const m = month ?? now.getMonth() + 1;
         return api.get<DashboardAnalytics>(`/analytics/dashboard?year=${y}&month=${m}`);
-    }
+    },
+
+    // ===== Organizations API =====
+    getOrganizations: () =>
+        api.get<Organization[]>('/orgs'),
+
+    createOrganization: (name: string, slug: string) =>
+        api.post<Organization>('/orgs', { name, slug }),
+
+    getOrganization: (orgId: string) =>
+        api.get<Organization>(`/orgs/${orgId}`),
+
+    updateOrganization: (orgId: string, name: string) =>
+        api.put<Organization>(`/orgs/${orgId}`, { name }),
+
+    deleteOrganization: (orgId: string) =>
+        api.delete<{ message: string }>(`/orgs/${orgId}`),
+
+    // Org Members
+    getOrgMembers: (orgId: string) =>
+        api.get<OrganizationMember[]>(`/orgs/${orgId}/members`),
+
+    inviteOrgMember: (orgId: string, email: string, role: string) =>
+        api.post<OrganizationMember>(`/orgs/${orgId}/members`, { email, role }),
+
+    updateOrgMemberRole: (orgId: string, userId: string, role: string) =>
+        api.put<OrganizationMember>(`/orgs/${orgId}/members/${userId}`, { role }),
+
+    removeOrgMember: (orgId: string, userId: string) =>
+        api.delete<{ message: string }>(`/orgs/${orgId}/members/${userId}`),
+
+    // Org Repositories
+    getOrgRepositories: (orgId: string, page = 1, limit = 10) =>
+        api.get<UserRepository[]>(`/orgs/${orgId}/repositories?page=${page}&limit=${limit}`),
+
+    shareRepoToOrg: (orgId: string, repositoryId: string) =>
+        api.post<{ message: string }>(`/orgs/${orgId}/repositories`, { repository_id: repositoryId }),
+
+    unshareRepoFromOrg: (orgId: string, repoId: string) =>
+        api.delete<{ message: string }>(`/orgs/${orgId}/repositories/${repoId}`),
+
+    // Org Analyses
+    getOrgAnalysisHistory: (orgId: string, repoId: string, page = 1, limit = 10) =>
+        api.get<PaginatedResponse<AnalysisRequest>>(`/orgs/${orgId}/repositories/${repoId}/analyses?page=${page}&limit=${limit}`),
+
+    // Analysis Comments
+    getAnalysisComments: (orgId: string, resultId: string) =>
+        api.get<AnalysisComment[]>(`/orgs/${orgId}/analyses/${resultId}/comments`),
+
+    addAnalysisComment: (orgId: string, resultId: string, content: string) =>
+        api.post<AnalysisComment>(`/orgs/${orgId}/analyses/${resultId}/comments`, { content }),
+
+    updateAnalysisComment: (orgId: string, commentId: string, content: string) =>
+        api.put<AnalysisComment>(`/orgs/${orgId}/comments/${commentId}`, { content }),
+
+    deleteAnalysisComment: (orgId: string, commentId: string) =>
+        api.delete<{ message: string }>(`/orgs/${orgId}/comments/${commentId}`)
 };

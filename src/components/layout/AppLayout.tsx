@@ -1,12 +1,15 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, GitBranch, PlaySquare, LogOut, Code2, Menu, X, History, Settings } from 'lucide-react';
+import { LayoutDashboard, GitBranch, PlaySquare, LogOut, Code2, Menu, X, History, Settings, Building2, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../auth/useAuth';
+import { useOrg } from '../../auth/OrgProvider';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 export const AppLayout: React.FC = () => {
     const { logout } = useAuth();
+    const { organizations, activeOrg, setActiveOrg, refreshOrgs } = useOrg();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const [isOrgDropdownOpen, setIsOrgDropdownOpen] = React.useState(false);
 
     const navLinks = [
         { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
@@ -15,6 +18,22 @@ export const AppLayout: React.FC = () => {
         { name: 'Analysis History', path: '/history', icon: <History size={20} /> },
         { name: 'Settings', path: '/settings', icon: <Settings size={20} /> }
     ];
+
+    const handleCreateOrg = async () => {
+        const name = window.prompt("Enter new Organization name:");
+        if (!name) return;
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        try {
+            // Assume mistletoeApi has createOrganization already
+            const { mistletoeApi } = await import('../../api/endpoints');
+            const newOrg = await mistletoeApi.createOrganization(name, slug);
+            await refreshOrgs();
+            setActiveOrg(newOrg);
+            setIsOrgDropdownOpen(false);
+        } catch (e) {
+            alert("Failed to create organization");
+        }
+    };
 
     return (
         <div className="flex h-screen bg-bg-dark overflow-hidden">
@@ -34,12 +53,72 @@ export const AppLayout: React.FC = () => {
                 flex flex-col transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
-                <div className="p-6">
-                    <div className="flex items-center gap-3">
+                <div className="p-6 pb-2">
+                    <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-primary/20 rounded-lg">
                             <Code2 className="text-primary" size={24} />
                         </div>
                         <h2 className="text-2xl font-heading font-bold tracking-tight text-white">Mistletoe</h2>
+                    </div>
+
+                    {/* Org Switcher */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
+                            className="w-full flex items-center justify-between p-2 rounded-lg bg-glass hover:bg-glass-hover border border-glass-border transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-2 truncate">
+                                <div className="p-1 bg-primary/10 rounded">
+                                    {activeOrg ? <Building2 size={16} className="text-primary" /> : <Code2 size={16} className="text-text-muted" />}
+                                </div>
+                                <span className="font-medium text-sm truncate text-white">
+                                    {activeOrg ? activeOrg.name : "Personal Workspace"}
+                                </span>
+                            </div>
+                            <ChevronDown size={16} className="text-text-muted shrink-0" />
+                        </button>
+                        
+                        {isOrgDropdownOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-1 p-1 bg-bg-dark border border-glass-border rounded-lg shadow-xl z-50 animate-fade-in origin-top">
+                                <button
+                                    onClick={() => { setActiveOrg(null); setIsOrgDropdownOpen(false); }}
+                                    className={`w-full flex items-center gap-2 p-2 rounded-md text-sm transition-colors ${!activeOrg ? 'bg-primary/20 text-white' : 'text-text-muted hover:bg-glass hover:text-white'}`}
+                                >
+                                    <Code2 size={16} /> Personal Workspace
+                                </button>
+                                {organizations.length > 0 && <div className="h-px bg-glass-border my-1" />}
+                                {organizations.map(org => (
+                                    <button
+                                        key={org.id}
+                                        onClick={() => { setActiveOrg(org); setIsOrgDropdownOpen(false); }}
+                                        className={`w-full flex items-center gap-2 p-2 rounded-md text-sm transition-colors ${activeOrg?.id === org.id ? 'bg-primary/20 text-white' : 'text-text-muted hover:bg-glass hover:text-white'}`}
+                                    >
+                                        <Building2 size={16} /> <span className="truncate">{org.name}</span>
+                                    </button>
+                                ))}
+                                
+                                {activeOrg && (
+                                    <>
+                                        <div className="h-px bg-glass-border my-1" />
+                                        <NavLink
+                                            to={`/orgs/${activeOrg.id}`}
+                                            onClick={() => setIsOrgDropdownOpen(false)}
+                                            className="w-full flex items-center justify-center gap-2 p-2 rounded-md text-sm text-text-muted hover:bg-glass hover:text-white transition-colors"
+                                        >
+                                            <Settings size={14} /> Manage Workspace
+                                        </NavLink>
+                                    </>
+                                )}
+
+                                <div className="h-px bg-glass-border my-1" />
+                                <button
+                                    onClick={handleCreateOrg}
+                                    className="w-full flex items-center justify-center gap-2 p-2 rounded-md text-sm text-accent hover:bg-glass transition-colors font-medium border border-dashed border-glass-border mt-1"
+                                >
+                                    + Create Organization
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

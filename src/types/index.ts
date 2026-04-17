@@ -119,3 +119,39 @@ export interface DashboardAnalytics {
   top_impacted_areas: ImpactedArea[];
   top_repositories: RepoActivity[];
 }
+
+// ===== Organization Types =====
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  avatar_url: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  org_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+  username: string;
+  display_name: string;
+  avatar_url: string;
+  email: string;
+  joined_at: string;
+}
+
+export interface AnalysisComment {
+  id: string;
+  analysis_result_id: string;
+  user_id: string;
+  org_id: string;
+  content: string;
+  username: string;
+  display_name: string;
+  avatar_url: string;
+  created_at: string;
+  updated_at: string;
+}
