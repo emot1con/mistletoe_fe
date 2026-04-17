@@ -129,5 +129,6 @@ export const apiFetch = async <T>(endpoint: string, options: FetchOptions = {}):
 export const api = {
     get: <T>(url: string) => apiFetch<T>(url, { method: 'GET' }),
     post: <T>(url: string, body: any) => apiFetch<T>(url, { method: 'POST', body: JSON.stringify(body) }),
+    put: <T>(url: string, body: any) => apiFetch<T>(url, { method: 'PUT', body: JSON.stringify(body) }),
     delete: <T>(url: string) => apiFetch<T>(url, { method: 'DELETE' }),
 };

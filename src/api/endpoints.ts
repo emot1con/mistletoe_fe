@@ -4,7 +4,9 @@ import type {
     GithubRepo, 
     AnalysisRequest, 
     AnalysisResult,
-    PaginatedResponse
+    PaginatedResponse,
+    ExportJob,
+    UserSettings
 } from '../types';
 
 export const mistletoeApi = {
@@ -31,6 +33,13 @@ export const mistletoeApi = {
     removeRepository: (id: string) => 
         api.delete<{message: string}>(`/repositories/${id}`),
 
+    // User settings
+    getUserSettings: () =>
+        api.get<UserSettings>('/user/settings'),
+    
+    updateUserSettings: (settings: Partial<UserSettings>) =>
+        api.put<UserSettings>('/user/settings', settings),
+
     // Analysis
     createAnalysis: (repoId: string, featureRequest: string) => 
         api.post<AnalysisResult>('/analysis', {
@@ -48,5 +57,12 @@ export const mistletoeApi = {
         api.get<number>('/analysis/count'),
 
     getAnalysisRepoCount: (repoId: string) =>
-        api.get<number>(`/repositories/${repoId}/analyses/count`)
+        api.get<number>(`/repositories/${repoId}/analyses/count`),
+
+    // Export
+    exportToGithubIssue: (analysisId: string) =>
+        api.post<ExportJob>(`/analysis/${analysisId}/export`, {}),
+
+    getExportStatus: (jobId: string) =>
+        api.get<ExportJob>(`/export/${jobId}/status`)
 };

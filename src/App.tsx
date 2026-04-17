@@ -10,6 +10,7 @@ import { RepositoriesPage } from './pages/RepositoriesPage';
 import { AnalysisNewPage } from './pages/AnalysisNewPage';
 import { AnalysisHistoryPage } from './pages/AnalysisHistoryPage';
 import { AnalysisResultPage } from './pages/AnalysisResultPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
@@ -31,6 +32,7 @@ function App() {
               <Route path="/analysis/new" element={<AnalysisNewPage />} />
               <Route path="/history" element={<AnalysisHistoryPage />} />
               <Route path="/analysis/:id" element={<AnalysisResultPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
 

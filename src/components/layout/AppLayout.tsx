@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, GitBranch, PlaySquare, LogOut, Code2, Menu, X, History } from 'lucide-react';
+import { LayoutDashboard, GitBranch, PlaySquare, LogOut, Code2, Menu, X, History, Settings } from 'lucide-react';
 import { useAuth } from '../../auth/useAuth';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 
@@ -12,7 +12,8 @@ export const AppLayout: React.FC = () => {
         { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
         { name: 'Repositories', path: '/repositories', icon: <GitBranch size={20} /> },
         { name: 'New Analysis', path: '/analysis/new', icon: <PlaySquare size={20} /> },
-        { name: 'Analysis History', path: '/history', icon: <History size={20} /> }
+        { name: 'Analysis History', path: '/history', icon: <History size={20} /> },
+        { name: 'Settings', path: '/settings', icon: <Settings size={20} /> }
     ];
 
     return (

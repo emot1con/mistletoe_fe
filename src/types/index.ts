@@ -6,6 +6,12 @@ export interface User {
   avatar_url: string;
 }
 
+export interface UserSettings {
+  user_id: string;
+  hourly_rate_usd: number | null;
+  default_hourly_rate_usd: number;
+}
+
 export interface UserRepository {
   id: string;
   user_id: string;
@@ -82,4 +88,12 @@ export interface AnalysisResult {
   cost_estimate_min_usd: number;
   cost_estimate_max_usd: number;
   created_at: string;
+}
+
+export interface ExportJob {
+  id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  github_issue_url?: string;
+  github_issue_number?: number;
+  error_message?: string;
 }
