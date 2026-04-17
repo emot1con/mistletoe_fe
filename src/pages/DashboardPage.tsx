@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { mistletoeApi } from '../api/endpoints';
-import type { UserRepository } from '../types';
+import type { UserRepository, DashboardAnalytics } from '../types';
 import { PageLoader } from '../components/ui/Loader';
-import { GitBranch, Activity, PlaySquare, ArrowRight } from 'lucide-react';
+import { GitBranch, Activity, PlaySquare, ArrowRight, BarChart3, PieChart as PieIcon, Layers } from 'lucide-react';
+import { MonthlyEffortChart, ImpactedAreasChart, RepoActivityChart } from '../components/analysis/AnalyticsDashboard';
 
 export const DashboardPage: React.FC = () => {
     const [repos, setRepos] = useState<UserRepository[]>([]);
     const [analysisCount, setAnalysisCount] = useState<number | null>(null);
+    const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -18,12 +20,14 @@ export const DashboardPage: React.FC = () => {
 
         Promise.all([
             mistletoeApi.getSelectedRepos(),
-            mistletoeApi.getAnalysisCount()
+            mistletoeApi.getAnalysisCount(),
+            mistletoeApi.getDashboardAnalytics()
         ])
-            .then(([reposData, countData]: [any, any]) => {
+            .then(([reposData, countData, analyticsData]: [any, any, any]) => {
                 if (controller.signal.aborted) return;
                 setRepos(reposData || []);
                 setAnalysisCount(countData);
+                setAnalytics(analyticsData);
             })
             .catch((err: any) => {
                 if (controller.signal.aborted) return;
@@ -62,7 +66,7 @@ export const DashboardPage: React.FC = () => {
                 <p className="text-text-muted">Here is what is happening with your repositories today.</p>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="glass-card p-6 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-primary/20 text-primary rounded-xl">
@@ -83,6 +87,40 @@ export const DashboardPage: React.FC = () => {
                     <p className="text-3xl font-heading font-bold">{analysisCount !== null ? analysisCount : '-'}</p>
                 </div>
             </div>
+
+            {/* Analytics Section */}
+            {analytics && (
+                <div className="space-y-6 mt-12 animate-fade">
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-xl font-heading font-bold flex items-center gap-2">
+                            <BarChart3 size={20} className="text-primary" /> Analytics & Trends
+                        </h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 glass-card p-6">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted mb-4 border-b border-glass-border pb-2">Effort Trends (This Month)</h3>
+                            <MonthlyEffortChart data={analytics.monthly_effort} />
+                        </div>
+                        
+                        <div className="glass-card p-6">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted mb-4 border-b border-glass-border pb-2 flex items-center gap-2">
+                                <PieIcon size={16} /> Impact Areas
+                            </h3>
+                            <ImpactedAreasChart data={analytics.top_impacted_areas} />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="glass-card p-6">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted mb-4 border-b border-glass-border pb-2 flex items-center gap-2">
+                                <Layers size={16} /> Most Active Repositories
+                            </h3>
+                            <RepoActivityChart data={analytics.top_repositories} />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="mt-12">
                 <div className="flex items-center justify-between mb-6">

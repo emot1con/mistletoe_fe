@@ -6,7 +6,8 @@ import type {
     AnalysisResult,
     PaginatedResponse,
     ExportJob,
-    UserSettings
+    UserSettings,
+    DashboardAnalytics
 } from '../types';
 
 export const mistletoeApi = {
@@ -64,5 +65,13 @@ export const mistletoeApi = {
         api.post<ExportJob>(`/analysis/${analysisId}/export`, {}),
 
     getExportStatus: (jobId: string) =>
-        api.get<ExportJob>(`/export/${jobId}/status`)
+        api.get<ExportJob>(`/export/${jobId}/status`),
+
+    // Analytics
+    getDashboardAnalytics: (year?: number, month?: number) => {
+        const now = new Date();
+        const y = year ?? now.getFullYear();
+        const m = month ?? now.getMonth() + 1;
+        return api.get<DashboardAnalytics>(`/analytics/dashboard?year=${y}&month=${m}`);
+    }
 };

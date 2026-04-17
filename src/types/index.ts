@@ -97,3 +97,25 @@ export interface ExportJob {
   github_issue_number?: number;
   error_message?: string;
 }
+
+export interface MonthlyEffort {
+  date: string;            // "2026-04-01"
+  total_min_hours: number;
+  total_max_hours: number;
+}
+
+export interface ImpactedArea {
+  component: string;
+  frequency: number;
+}
+
+export interface RepoActivity {
+  full_name: string;
+  analysis_count: number;
+}
+
+export interface DashboardAnalytics {
+  monthly_effort: MonthlyEffort[];
+  top_impacted_areas: ImpactedArea[];
+  top_repositories: RepoActivity[];
+}
